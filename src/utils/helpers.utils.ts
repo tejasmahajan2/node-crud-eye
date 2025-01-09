@@ -1,5 +1,13 @@
-import mongoose from "mongoose";
+import mongoose, { Model } from "mongoose";
 import swaggerJsdoc from "swagger-jsdoc";
+
+export function getCollection(collectionName : string) {
+    try {
+        return mongoose.connection.collection(collectionName);
+    } catch (error) {
+        throw error;
+    }
+}
 
 export function generateSwaggerPaths(projectFound: any, typeFound: any) {
     const projectName = projectFound?.name;
@@ -186,3 +194,4 @@ export async function getSwaggerDocument(projectName: string) {
 
     return docs;
 }
+
