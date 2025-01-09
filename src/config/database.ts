@@ -1,4 +1,4 @@
-import mongoose, { ConnectOptions } from "mongoose";
+import mongoose from "mongoose";
 
 const connectDB = async (): Promise<void> => {
   try {
@@ -10,10 +10,7 @@ const connectDB = async (): Promise<void> => {
     }
 
     // Establish the connection to MongoDB
-    await mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    } as ConnectOptions);
+    await mongoose.connect(mongoUri);
 
     console.log("Database connected successfully");
   } catch (err) {
