@@ -1,5 +1,6 @@
 import mongoose, { Model } from "mongoose";
 import swaggerJsdoc from "swagger-jsdoc";
+import { AppError } from "./AppError";
 
 export function getCollection(collectionName : string) {
     try {
@@ -167,7 +168,7 @@ export async function getSwaggerDocument(projectName: string) {
     const projectsCollection = mongoose.connection.collection("projects");
 
     const projectFound = await projectsCollection.findOne({ name: projectName });
-    if (!projectFound) return { error: "Project not found" };
+    if (!projectFound) throw new AppError('NOT_FOUND', 'Project not found', 404);
 
     const typesCollection = mongoose.connection.collection("types");
     const typeFound = await typesCollection.findOne({
@@ -175,7 +176,7 @@ export async function getSwaggerDocument(projectName: string) {
         organizationId: projectFound?.organizationId,
     });
 
-    if (!typeFound) return { error: "Type not found" };
+    if (!typeFound) throw new AppError('NOT_FOUND', 'Project not found', 404);
 
     const swaggerPaths = generateSwaggerPaths(projectFound, typeFound);
     const docs = swaggerJsdoc({
