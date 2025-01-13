@@ -7,7 +7,8 @@ import connectDB from "./config/database";
 import mongoose from "mongoose";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
-import swaggerRouter from "./routes/swagger-routes";
+import swaggerRouter from "./routes/swagger-router";
+import projectRouter from "./routes/project-router";
 import { BaseSchemaFields } from "./schemas/base-schema";
 
 const ajv = new Ajv();
@@ -19,6 +20,7 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use('/', swaggerRouter);
+app.use('/', projectRouter);
 
 const projectsCollection = mongoose.connection.collection("projects");
 const typesCollection = mongoose.connection.collection("types");
@@ -78,7 +80,7 @@ async function validateRequest(req: Request, res: Response, next: NextFunction) 
                     const validate = ajv.compile(schemaEntity.schema);
                     if (!validate(req.body)) {
                         // const errors = validate.errors?.map((e) => `${e?.message} "${e?.params?.additionalProperty}"`);
-                        res.status(400).json({ errors : validate.errors });
+                        res.status(400).json({ errors: validate.errors });
                     } else {
                         switch (req?.method) {
                             case "POST":
@@ -153,14 +155,11 @@ async function validateRequest(req: Request, res: Response, next: NextFunction) 
     }
 }
 
-app.use('/:projectName', validateRequest);
+// app.use('/:projectName', validateRequest);
 
-app.use('/:projectName', async (req: Request, res: Response, next: NextFunction) => {
-    const typeFound = "req.body.types";
-    if (!res.headersSent) {
-        res.send(typeFound);
-    }
-});
+// app.use('/:projectName/*', async (req: Request, res: Response, next: NextFunction) => {
+//     res.send(`Not found ${req.originalUrl}`);
+// });
 
 app.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);

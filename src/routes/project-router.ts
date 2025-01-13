@@ -4,8 +4,25 @@ import * as projectController from "../controllers/project-controller";
 const router = express.Router();
 
 // Define middlewares
-router.use('/:projectName', projectController.validateProject);
-router.use('/:projectName', projectController.validateType);
-router.use('/:projectName', projectController.validateSchema);
+const allMiddlewares = [
+    projectController.validateProject,
+    projectController.validateModule,
+    projectController.validateResource,
+    projectController.validatePayload,
+    projectController.processRequest,
+]
 
-module.exports = router;
+const paramsAllMiddlewares = [
+    projectController.validateProject,
+    projectController.validateModule,
+    projectController.validateResource,
+    projectController.validateParams,
+    projectController.validatePayload,
+    projectController.processRequest,
+]
+
+
+router.use('/:projectName/*/:id', paramsAllMiddlewares);
+router.use('/:projectName/*', allMiddlewares);
+
+export default router;
