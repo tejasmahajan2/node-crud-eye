@@ -8,6 +8,7 @@ const allMiddlewares = [
     projectController.validateProject,
     projectController.validateModule,
     projectController.validateResource,
+    projectController.validateMethods,
     projectController.validatePayload,
     projectController.processRequest,
 ]
@@ -16,6 +17,7 @@ const paramsAllMiddlewares = [
     projectController.validateProject,
     projectController.validateModule,
     projectController.validateResource,
+    projectController.validateMethods,
     projectController.validateParams,
     projectController.validatePayload,
     projectController.processRequest,

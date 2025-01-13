@@ -64,7 +64,6 @@ export async function validateResource(req: Request, res: Response, next: NextFu
     const { resourceName, projectName, id } = getResourceComponents(req);
     const { projectEntity, moduleEntity } = req.body;
 
-    req.method = req.method === "PATCH" ? "PUT" : req.method;
     const resourceFound = await resourcesCollection.findOne({
         name: req.method.toLowerCase(),
         moduleId: `${moduleEntity._id}`
@@ -78,63 +77,86 @@ export async function validateResource(req: Request, res: Response, next: NextFu
     }
 }
 
-
-export async function validateParams(req: Request, res: Response, next: NextFunction) {
-    const { resourceName, projectName, id } = getResourceComponents(req);
-    const { projectEntity, moduleEntity, resourceEntity, ...body } = req.body;
-
-    const modelName = `${projectName}_${resourceName}`.toLowerCase();
-    const model = getOrCreateModel(modelName);
-
-    // Do not allow for post method that contains url param
-    if (id && req.method === "POST") {
+export async function validateMethods(req: Request, res: Response, next: NextFunction) {
+    const { id } = getResourceComponents(req);
+    if (
+        (id && req.method === "POST") ||
+        (!id && req.method === "PUT")
+    ) {
         res.status(404).send(`Cannot ${req.method} ${req.originalUrl}`);
-    } else if (id && req.method !== "POST") {
-        // Allow for get, put, delete, patch method that contains url param and validate obj id
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            res.status(400).json({ error: "Invalid ObjectId" });
-        } else {
-            // but if method is get with url params then get specific resource
-            if (req.method === "GET") {
-                res.send(await model.findOne({ _id: id }))
-            } else if (req.method === "DELETE") {
-                await model.deleteOne({ _id: id })
-                res.send("Obj deleted successfully.");
-            }
-            else {
-                const validate = ajv.compile(resourceEntity.schema);
-                if (!validate(body)) {
-                    res.status(400).json({ errors: validate.errors });
-                } else {
-                    // else validate payload sent
-                    next();
-                }
-            }
-        }
     } else {
-        res.send(await model.find())
-        // res.send("Only" + req.method)
-        // next();
+        next();
     }
 }
 
-export async function validatePayload(req: Request, res: Response, next: NextFunction) {
+export async function validateParams(req: Request, res: Response, next: NextFunction) {
+    const { id } = getResourceComponents(req);
+
+    if (id && !mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({ error: "Invalid ObjectId" });
+    } else {
+        next();
+    }
+}
+
+export async function validateParamss(req: Request, res: Response, next: NextFunction) {
     const { resourceName, projectName, id } = getResourceComponents(req);
     const { projectEntity, moduleEntity, resourceEntity, ...body } = req.body;
 
+    if (id && mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({ error: "Invalid ObjectId" });
+    } else {
+        next();
+    }
 
     const modelName = `${projectName}_${resourceName}`.toLowerCase();
     const model = getOrCreateModel(modelName);
 
-    if (req.method === "GET") {
-        res.send(await model.find({}));
-    } else {
+
+    // // Do not allow for post method that contains url param
+    // if (id && req.method === "POST") {
+    //     res.status(404).send(`Cannot ${req.method} ${req.originalUrl}`);
+    // } else if (id && req.method !== "POST") {
+    //     // Allow for get, put, delete, patch method that contains url param and validate obj id
+    //     if (!mongoose.Types.ObjectId.isValid(id)) {
+    //         res.status(400).json({ error: "Invalid ObjectId" });
+    //     } else {
+    //         // but if method is get with url params then get specific resource
+    //         if (req.method === "GET") {
+    //             res.send(await model.findOne({ _id: id }))
+    //         } else if (req.method === "DELETE") {
+    //             await model.deleteOne({ _id: id })
+    //             res.send("Obj deleted successfully.");
+    //         }
+    //         else {
+    //             const validate = ajv.compile(resourceEntity.schema);
+    //             if (!validate(body)) {
+    //                 res.status(400).json({ errors: validate.errors });
+    //             } else {
+    //                 // else validate payload sent
+    //                 next();
+    //             }
+    //         }
+    //     }
+    // } else {
+    //     res.send(await model.find())
+    //     // res.send("Only" + req.method)
+    //     // next();
+    // }
+}
+
+export async function validatePayload(req: Request, res: Response, next: NextFunction) {
+    const { projectEntity, moduleEntity, resourceEntity, ...body } = req.body;
+
+    if (["POST", "PUT"].includes(req.method)) {
         const validate = ajv.compile(resourceEntity.schema);
         if (!validate(body)) {
             res.status(400).json({ errors: validate.errors });
         } else {
             next();
         }
+    } else {
+        next();
     }
 }
 
@@ -144,18 +166,42 @@ export async function processRequest(req: Request, res: Response, next: NextFunc
 
     const modelName = `${projectName}_${resourceName}`.toLowerCase();
     const model = getOrCreateModel(modelName);
-
-    switch (req.method) {
-        case "POST":
-            res.send(await model.create(body));
-            break;
-        case "PUT":
-            res.send(await model.findOneAndUpdate({ _id: id }, body));
-            break;
-        default:
-            next();
-            break;
+    if (req.method === "POST") {
+        const created = await model.create(body);
+        res.send(created);
+    } else if (req.method === "GET" && id) {
+        const retrieved = await model.findOne({ _id: id });
+        if (retrieved) {
+            res.send(retrieved);
+        } else {
+            res.send("Entity not found.");
+        }
+    } else if (req.method === "GET" && !id) {
+        const retrievedAll = await model.find({});
+        if (retrievedAll?.length > 0) {
+            res.send(retrievedAll);
+        } else {
+            res.send("No entities found.");
+        }
+    } else if (req.method === "PUT") {
+        const found = await model.findOne({ _id: id });
+        if (found) {
+            const updated = await model.updateOne({ _id: id }, body);
+            res.send(updated.modifiedCount === 0 ? "Entity not modified" : "Entity not modified");
+        } else {
+            res.send("Entity not found.");
+        }
+    } else if (req.method === "DELETE") {
+        const deleted = await model.findByIdAndDelete({ _id: id });
+        if (deleted) {
+            res.send("Entity deleted.");
+        } else {
+            res.send("Entity not found.");
+        }
+    } else {
+        res.status(404).send(`Cannot ${req.method} ${req.originalUrl}`);
     }
+
 }
 
 // async function validateRequest(req: Request, res: Response, next: NextFunction) {
