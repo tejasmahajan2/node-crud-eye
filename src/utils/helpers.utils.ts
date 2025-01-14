@@ -2,6 +2,8 @@ import mongoose, { Model } from "mongoose";
 import swaggerJsdoc from "swagger-jsdoc";
 import { AppError } from "./AppError";
 import { collections } from "./collections";
+import { Console } from "console";
+import { BaseSchemaFields } from "../schemas/base-schema";
 
 export function getCollection(collectionName: string) {
     try {
@@ -163,9 +165,7 @@ export function generateSwaggerPaths_(projectFound: any, modulesFound: any) {
     };
 
     return swaggerPaths;
-
 }
-
 
 
 export async function generateSwaggerPaths(projectFound: any, modulesFound: any) {
@@ -306,10 +306,6 @@ export async function generateSwaggerPaths(projectFound: any, modulesFound: any)
     return swaggerPaths;
 }
 
-
-
-
-
 export async function getSwaggerDocument(projectName: string) {
 
     const projectFound = await collections.projects.findOne({ name: projectName });
@@ -324,12 +320,25 @@ export async function getSwaggerDocument(projectName: string) {
     const paths: any = {};
 
     for (const module of modulesFound) {
+        const allResources = await collections.resources.find({ moduleId: `${module._id}` }).toArray();
+
+        if (allResources.length === 0) continue;
+
         const moduleName = module.name;
         const basePath = `${projectFound.name}/${moduleName}`;
 
-        // GET all resources
-        paths[`/${basePath}`] = {
-            get: {
+        const methodsToConfigure = allResources.map((resource) => resource.method.toUpperCase());
+
+        // Initialize base path if it doesn't exist
+        if (!paths[`/${basePath}`]) {
+            paths[`/${basePath}`] = {};
+        }
+
+        // Conditionally add GET all resources
+        if (methodsToConfigure.includes("GET")) {
+            const resourceFound = allResources.find((resource) => resource.method === "GET");
+
+            paths[`/${basePath}`]["get"] = {
                 summary: `Get all ${moduleName}`,
                 tags: [moduleName],
                 responses: {
@@ -341,11 +350,7 @@ export async function getSwaggerDocument(projectName: string) {
                                     type: "array",
                                     items: {
                                         type: "object",
-                                        properties: {
-                                            id: { type: "string" },
-                                            name: { type: "string" },
-                                            description: { type: "string" }
-                                        }
+                                        properties: { ...resourceFound?.schema?.properties, ...BaseSchemaFields }
                                     }
                                 }
                             }
@@ -355,8 +360,14 @@ export async function getSwaggerDocument(projectName: string) {
                         description: `${moduleName} not found`,
                     },
                 },
-            },
-            post: {
+            };
+        }
+
+        // Conditionally add POST method
+        if (methodsToConfigure.includes("POST")) {
+            const resourceFound = allResources.find((resource) => resource.method === "POST");
+
+            paths[`/${basePath}`]["post"] = {
                 summary: `Create a new ${moduleName}`,
                 tags: [moduleName],
                 requestBody: {
@@ -365,28 +376,35 @@ export async function getSwaggerDocument(projectName: string) {
                         "application/json": {
                             schema: {
                                 type: "object",
-                                properties: {
-                                    name: { type: "string" },
-                                    description: { type: "string" },
-                                }
+                                properties: resourceFound?.schema?.properties
                             }
                         }
                     }
                 },
                 responses: {
                     201: {
+                        schema: {
+                            type: "object",
+                            properties: resourceFound?.schema?.properties
+                        },
                         description: `${moduleName} created successfully`,
                     },
                     400: {
                         description: `Invalid request data for ${moduleName}`,
                     },
                 }
-            }
-        };
+            };
+        }
 
-        // GET by ID, PUT, DELETE
-        paths[`/${basePath}/{id}`] = {
-            get: {
+        // Initialize base path with ID if it doesn't exist
+        if (!paths[`/${basePath}/{id}`]) {
+            paths[`/${basePath}/{id}`] = {};
+        }
+
+        // Conditionally add GET by ID
+        if (methodsToConfigure.includes("GET_BY_ID")) {
+            const resourceFound = allResources.find((resource) => resource.method === "GET_BY_ID");
+            paths[`/${basePath}/{id}`]["get"] = {
                 summary: `Get a ${moduleName} by ID`,
                 tags: [moduleName],
                 parameters: [
@@ -400,14 +418,23 @@ export async function getSwaggerDocument(projectName: string) {
                 ],
                 responses: {
                     200: {
+                        schema: {
+                            type: "object",
+                            properties: { ...resourceFound?.schema?.properties, ...BaseSchemaFields }
+                        },
                         description: `${moduleName} retrieved successfully`,
                     },
                     404: {
                         description: `${moduleName} not found`,
                     },
                 },
-            },
-            put: {
+            };
+        }
+
+        // Conditionally add PUT by ID
+        if (methodsToConfigure.includes("PUT")) {
+            const resourceFound = allResources.find((resource) => resource.method === "GET_BY_ID");
+            paths[`/${basePath}/{id}`]["put"] = {
                 summary: `Update a ${moduleName} by ID`,
                 tags: [moduleName],
                 parameters: [
@@ -425,24 +452,29 @@ export async function getSwaggerDocument(projectName: string) {
                         "application/json": {
                             schema: {
                                 type: "object",
-                                properties: {
-                                    name: { type: "string" },
-                                    description: { type: "string" },
-                                }
+                                properties: resourceFound?.schema?.properties
                             }
                         }
                     }
                 },
                 responses: {
-                    200: {
+                    201: {
+                        schema: {
+                            type: "object",
+                            properties: { ...resourceFound?.schema?.properties, ...BaseSchemaFields }
+                        },
                         description: `${moduleName} updated successfully`,
                     },
                     404: {
                         description: `${moduleName} not found`,
                     },
                 }
-            },
-            delete: {
+            };
+        }
+
+        // Conditionally add DELETE by ID
+        if (methodsToConfigure.includes("DELETE")) {
+            paths[`/${basePath}/{id}`]["delete"] = {
                 summary: `Delete a ${moduleName} by ID`,
                 tags: [moduleName],
                 parameters: [
@@ -462,8 +494,8 @@ export async function getSwaggerDocument(projectName: string) {
                         description: `${moduleName} not found`,
                     },
                 }
-            }
-        };
+            };
+        }
     }
 
     const docs = swaggerJsdoc({

@@ -31,7 +31,9 @@ swaggerRouter.get("/:projectName/swagger", async (req: Request, res: Response, n
 
 swaggerRouter.get("/:projectName/swagger/json", async (req: Request, res: Response): Promise<any> => {
     try {
-        const { projectName } = req.params;
+        let { projectName } = req.params;
+        projectName = projectName.toLowerCase();
+
         const docs = await getSwaggerDocument(projectName);
         res.status(200).send(docs);
     } catch (err) {
