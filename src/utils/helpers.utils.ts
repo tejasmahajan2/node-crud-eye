@@ -1,8 +1,7 @@
-import mongoose, { Model } from "mongoose";
+import mongoose from "mongoose";
 import swaggerJsdoc from "swagger-jsdoc";
 import { AppError } from "./AppError";
 import { collections } from "./collections";
-import { Console } from "console";
 import { BaseSchemaFields } from "../schemas/base-schema";
 
 export function getCollection(collectionName: string) {

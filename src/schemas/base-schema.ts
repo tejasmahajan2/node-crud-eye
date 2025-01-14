@@ -13,5 +13,5 @@ export const BaseSchemaFields = {
   createdAt: { type: Date, default: () => new Date() },
   modifiedAt: { type: Date, default: () => new Date() },
   isDeleted: { type: Boolean, default: false },
-  deletedAt: { type: Date, required: false },
+  deletedAt: { type: Date, required: false, default : null },
 };

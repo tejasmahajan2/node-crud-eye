@@ -3,13 +3,10 @@ import mongoose from "mongoose";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import { BaseSchemaFields } from '../schemas/base-schema';
+import { collections } from '../utils/collections';
 
 const ajv = new Ajv();
 addFormats(ajv);
-
-const projectsCollection = mongoose.connection.collection("projects");
-const modulesCollection = mongoose.connection.collection("modules");
-const resourcesCollection = mongoose.connection.collection("resources");
 
 function getResourceComponents(req: Request) {
     const { 0: resourceName, projectName, id } = req.params;
@@ -30,7 +27,7 @@ function getOrCreateModel(collectionName: string) {
 export async function validateProject(req: Request, res: Response, next: NextFunction) {
     const { resourceName, projectName, id } = getResourceComponents(req);
 
-    const projectFound = await projectsCollection.findOne({
+    const projectFound = await collections.projects.findOne({
         name: projectName
     });
 
@@ -47,7 +44,7 @@ export async function validateModule(req: Request, res: Response, next: NextFunc
     const { resourceName, projectName, id } = getResourceComponents(req);
     const { projectEntity } = req.body;
 
-    const moduleFound = await modulesCollection.findOne({
+    const moduleFound = await collections.modules.findOne({
         name: resourceName,
         projectId: `${projectEntity._id}`
     });
@@ -62,9 +59,9 @@ export async function validateModule(req: Request, res: Response, next: NextFunc
 
 export async function validateResource(req: Request, res: Response, next: NextFunction) {
     const { resourceName, projectName, id } = getResourceComponents(req);
-    const { projectEntity, moduleEntity } = req.body;
+    const { moduleEntity } = req.body;
 
-    const resourceFound = await resourcesCollection.findOne({
+    const resourceFound = await collections.resources.findOne({
         method: req.method,
         moduleId: `${moduleEntity._id}`
     });
@@ -97,52 +94,6 @@ export async function validateParams(req: Request, res: Response, next: NextFunc
     } else {
         next();
     }
-}
-
-export async function validateParamss(req: Request, res: Response, next: NextFunction) {
-    const { resourceName, projectName, id } = getResourceComponents(req);
-    const { projectEntity, moduleEntity, resourceEntity, ...body } = req.body;
-
-    if (id && mongoose.Types.ObjectId.isValid(id)) {
-        res.status(400).json({ error: "Invalid ObjectId" });
-    } else {
-        next();
-    }
-
-    const modelName = `${projectName}_${resourceName}`.toLowerCase();
-    const model = getOrCreateModel(modelName);
-
-
-    // // Do not allow for post method that contains url param
-    // if (id && req.method === "POST") {
-    //     res.status(404).send(`Cannot ${req.method} ${req.originalUrl}`);
-    // } else if (id && req.method !== "POST") {
-    //     // Allow for get, put, delete, patch method that contains url param and validate obj id
-    //     if (!mongoose.Types.ObjectId.isValid(id)) {
-    //         res.status(400).json({ error: "Invalid ObjectId" });
-    //     } else {
-    //         // but if method is get with url params then get specific resource
-    //         if (req.method === "GET") {
-    //             res.send(await model.findOne({ _id: id }))
-    //         } else if (req.method === "DELETE") {
-    //             await model.deleteOne({ _id: id })
-    //             res.send("Obj deleted successfully.");
-    //         }
-    //         else {
-    //             const validate = ajv.compile(resourceEntity.schema);
-    //             if (!validate(body)) {
-    //                 res.status(400).json({ errors: validate.errors });
-    //             } else {
-    //                 // else validate payload sent
-    //                 next();
-    //             }
-    //         }
-    //     }
-    // } else {
-    //     res.send(await model.find())
-    //     // res.send("Only" + req.method)
-    //     // next();
-    // }
 }
 
 export async function validatePayload(req: Request, res: Response, next: NextFunction) {
@@ -206,7 +157,7 @@ export async function processRequest(req: Request, res: Response, next: NextFunc
 
 // async function validateRequest(req: Request, res: Response, next: NextFunction) {
 //     const { projectName } = req.params;
-//     const projectFound = await projectsCollection.findOne({
+//     const projectFound = await collections.projects.findOne({
 //         name: projectName,
 //         isDeleted: false
 //     });
