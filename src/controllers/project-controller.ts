@@ -135,10 +135,10 @@ export async function processRequest(req: Request, res: Response, next: NextFunc
             res.send("No entities found.");
         }
     } else if (req.method === "PUT") {
-        const found = await model.findOne({ _id: id });
+        let found = await model.findOne({ _id: id });
         if (found) {
             const updated = await model.updateOne({ _id: id }, body);
-            res.send(updated.modifiedCount === 0 ? "Entity not modified" : "Entity modified");
+            res.send({message : updated.modifiedCount === 0 ? "Entity not modified" : "Entity modified"});
         } else {
             res.send("Entity not found.");
         }
