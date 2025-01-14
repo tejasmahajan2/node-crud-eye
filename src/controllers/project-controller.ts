@@ -65,7 +65,7 @@ export async function validateResource(req: Request, res: Response, next: NextFu
     const { projectEntity, moduleEntity } = req.body;
 
     const resourceFound = await resourcesCollection.findOne({
-        name: req.method.toLowerCase(),
+        method: req.method.toLowerCase(),
         moduleId: `${moduleEntity._id}`
     });
 

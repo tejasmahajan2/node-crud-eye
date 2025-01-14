@@ -10,7 +10,9 @@ swaggerRouter.use("/:projectName/swagger", swaggerUi.serve);
 // Custom logic after Swagger UI setup
 swaggerRouter.get("/:projectName/swagger", async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const { projectName } = req.params;
+        let { projectName } = req.params;
+        projectName = projectName.toLowerCase();
+
         const docs = await getSwaggerDocument(projectName);
         swaggerUi.setup(docs)(req, res, next);
     } catch (err) {

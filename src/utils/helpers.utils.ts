@@ -1,8 +1,9 @@
 import mongoose, { Model } from "mongoose";
 import swaggerJsdoc from "swagger-jsdoc";
 import { AppError } from "./AppError";
+import { collections } from "./collections";
 
-export function getCollection(collectionName : string) {
+export function getCollection(collectionName: string) {
     try {
         return mongoose.connection.collection(collectionName);
     } catch (error) {
@@ -10,14 +11,15 @@ export function getCollection(collectionName : string) {
     }
 }
 
-export function generateSwaggerPaths(projectFound: any, typeFound: any) {
-    const projectName = projectFound?.name;
-    const swaggerPaths: any = {};
+export function generateSwaggerPaths_(projectFound: any, modulesFound: any) {
+    const swaggerPaths: Record<string, object> = {};
 
-    swaggerPaths[`${projectName}/{id}`] = {
+    const basePath = `${projectFound.name}/${modulesFound.name}`;
+
+    swaggerPaths[`${basePath}/{id}`] = {
         get: {
-            summary: `Get a specific resource by ID for ${projectFound?.name} ${typeFound?.name}`,
-            tags: [projectFound?.name, typeFound?.name],
+            summary: `Get a specific resource by ID for ${projectFound?.name} ${modulesFound?.name}`,
+            tags: [projectFound?.name, modulesFound?.name],
             parameters: [
                 {
                     in: "path",
@@ -53,13 +55,13 @@ export function generateSwaggerPaths(projectFound: any, typeFound: any) {
     };
 
     // Define Swagger documentation for the route
-    swaggerPaths[projectName] = {
+    swaggerPaths[basePath] = {
         get: {
-            summary: `Get all resources for ${projectFound?.name} ${typeFound?.name}`,
-            tags: [projectFound?.name, typeFound?.name],
+            summary: `Get all resources for ${projectFound?.name} ${modulesFound?.name}`,
+            tags: [projectFound?.name, modulesFound?.name],
             responses: {
                 200: {
-                    description: `Successful retrieval of all ${projectFound?.name} ${typeFound?.name}`,
+                    description: `Successful retrieval of all ${projectFound?.name} ${modulesFound?.name}`,
                     content: {
                         "application/json": {
                             schema: {
@@ -79,8 +81,8 @@ export function generateSwaggerPaths(projectFound: any, typeFound: any) {
             },
         },
         post: {
-            summary: `Create a new resource for ${projectFound?.name} ${typeFound?.name}`,
-            tags: [projectFound?.name, typeFound?.name],
+            summary: `Create a new resource for ${projectFound?.name} ${modulesFound?.name}`,
+            tags: [projectFound?.name, modulesFound?.name],
             requestBody: {
                 required: true,
                 content: {
@@ -97,13 +99,13 @@ export function generateSwaggerPaths(projectFound: any, typeFound: any) {
             },
             responses: {
                 201: {
-                    description: `Created a new resource for ${projectFound?.name} ${typeFound?.name}`,
+                    description: `Created a new resource for ${projectFound?.name} ${modulesFound?.name}`,
                 },
             },
         },
         put: {
-            summary: `Update a resource for ${projectFound?.name} ${typeFound?.name}`,
-            tags: [projectFound?.name, typeFound?.name],
+            summary: `Update a resource for ${projectFound?.name} ${modulesFound?.name}`,
+            tags: [projectFound?.name, modulesFound?.name],
             parameters: [
                 {
                     in: "path",
@@ -131,13 +133,13 @@ export function generateSwaggerPaths(projectFound: any, typeFound: any) {
             },
             responses: {
                 200: {
-                    description: `Updated resource for ${projectFound?.name} ${typeFound?.name}`,
+                    description: `Updated resource for ${projectFound?.name} ${modulesFound?.name}`,
                 },
             },
         },
         delete: {
-            summary: `Delete a resource for ${projectFound?.name} ${typeFound?.name}`,
-            tags: [projectFound?.name, typeFound?.name],
+            summary: `Delete a resource for ${projectFound?.name} ${modulesFound?.name}`,
+            tags: [projectFound?.name, modulesFound?.name],
             parameters: [
                 {
                     in: "path",
@@ -151,7 +153,7 @@ export function generateSwaggerPaths(projectFound: any, typeFound: any) {
             ],
             responses: {
                 200: {
-                    description: `Deleted resource for ${projectFound?.name} ${typeFound?.name}`,
+                    description: `Deleted resource for ${projectFound?.name} ${modulesFound?.name}`,
                 },
                 404: {
                     description: "Resource not found",
@@ -164,21 +166,306 @@ export function generateSwaggerPaths(projectFound: any, typeFound: any) {
 
 }
 
-export async function getSwaggerDocument(projectName: string) {
-    const projectsCollection = mongoose.connection.collection("projects");
 
-    const projectFound = await projectsCollection.findOne({ name: projectName });
+
+export async function generateSwaggerPaths(projectFound: any, modulesFound: any) {
+    const swaggerPaths: Record<string, object> = {};
+
+    for (const module of modulesFound) {
+        const resourcesFound = await collections.resources.find({ moduleId: `${module._id}` }).toArray();
+        if (resourcesFound.length === 0) continue;
+
+        const resourceGroup: Record<string, object> = {};
+        const basePath = `${projectFound.name}/${module.name}`;
+
+        swaggerPaths[module.name] = resourceGroup;
+
+        // 1. Always include POST and GET ALL
+        resourceGroup[`${basePath}`] = {
+            get: {
+                summary: `Get all resources for ${projectFound?.name} ${module.name}`,
+                tags: [projectFound?.name, module.name],
+                responses: {
+                    200: {
+                        description: `Successful retrieval of all ${module.name}`,
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: "array",
+                                    items: {
+                                        type: "object",
+                                        properties: {
+                                            id: { type: "string" },
+                                            name: { type: "string" },
+                                            description: { type: "string" },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            post: {
+                summary: `Create a new resource for ${projectFound?.name} ${module.name}`,
+                tags: [projectFound?.name, module.name],
+                requestBody: {
+                    required: true,
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    name: { type: "string" },
+                                    description: { type: "string" },
+                                },
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    201: {
+                        description: `Created a new resource for ${module.name}`,
+                    },
+                },
+            },
+        };
+
+        // 2. Add GET (by ID), PUT, DELETE if they exist in DB
+        for (const resource of resourcesFound) {
+            const method = resource?.method?.toLowerCase();
+
+            if (!method) continue;
+
+            if (['get', 'put', 'delete'].includes(method)) {
+                const path = `${basePath}/{id}`;
+
+                if (!resourceGroup[path]) {
+                    resourceGroup[path] = {};
+                }
+
+                (resourceGroup[path] as any)[method] = {
+                    summary: resource.desc || `${method.toUpperCase()} a specific resource for ${module.name}`,
+                    tags: [projectFound?.name, module.name],
+                    parameters: [
+                        {
+                            in: "path",
+                            name: "id",
+                            required: true,
+                            schema: {
+                                type: "string",
+                            },
+                            description: "The ID of the resource",
+                        },
+                    ],
+                    responses: {
+                        200: {
+                            description: `${method.toUpperCase()} operation successful for ${module.name}`,
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            id: { type: "string" },
+                                            name: { type: "string" },
+                                            description: { type: "string" },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        404: {
+                            description: "Resource not found",
+                        },
+                    },
+                };
+
+                // Add requestBody for PUT
+                if (method === "put") {
+                    (resourceGroup[path] as any)[method].requestBody = {
+                        required: true,
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: "object",
+                                    properties: {
+                                        name: { type: "string" },
+                                        description: { type: "string" },
+                                    },
+                                },
+                            },
+                        },
+                    };
+                }
+            }
+        }
+
+        console.log({ resourceGroup });
+    }
+
+    return swaggerPaths;
+}
+
+
+
+
+
+export async function getSwaggerDocument(projectName: string) {
+
+    const projectFound = await collections.projects.findOne({ name: projectName });
     if (!projectFound) throw new AppError('NOT_FOUND', 'Project not found', 404);
 
-    const typesCollection = mongoose.connection.collection("types");
-    const typeFound = await typesCollection.findOne({
-        projectId: projectFound?.uuid,
-        organizationId: projectFound?.organizationId,
-    });
+    const modulesFound = await collections.modules.find({
+        projectId: `${projectFound?._id}`
+    }).toArray();
 
-    if (!typeFound) throw new AppError('NOT_FOUND', 'Project not found', 404);
+    if (modulesFound.length === 0) throw new AppError('NOT_FOUND', 'Project not found', 404);
 
-    const swaggerPaths = generateSwaggerPaths(projectFound, typeFound);
+    const paths: any = {};
+
+    for (const module of modulesFound) {
+        const moduleName = module.name;
+        const basePath = `${projectFound.name}/${moduleName}`;
+
+        // GET all resources
+        paths[`/${basePath}`] = {
+            get: {
+                summary: `Get all ${moduleName}`,
+                tags: [moduleName],
+                responses: {
+                    200: {
+                        description: `List of all ${moduleName}`,
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: "array",
+                                    items: {
+                                        type: "object",
+                                        properties: {
+                                            id: { type: "string" },
+                                            name: { type: "string" },
+                                            description: { type: "string" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    404: {
+                        description: `${moduleName} not found`,
+                    },
+                },
+            },
+            post: {
+                summary: `Create a new ${moduleName}`,
+                tags: [moduleName],
+                requestBody: {
+                    required: true,
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    name: { type: "string" },
+                                    description: { type: "string" },
+                                }
+                            }
+                        }
+                    }
+                },
+                responses: {
+                    201: {
+                        description: `${moduleName} created successfully`,
+                    },
+                    400: {
+                        description: `Invalid request data for ${moduleName}`,
+                    },
+                }
+            }
+        };
+
+        // GET by ID, PUT, DELETE
+        paths[`/${basePath}/{id}`] = {
+            get: {
+                summary: `Get a ${moduleName} by ID`,
+                tags: [moduleName],
+                parameters: [
+                    {
+                        in: "path",
+                        name: "id",
+                        required: true,
+                        schema: { type: "string" },
+                        description: `The ID of the ${moduleName}`,
+                    },
+                ],
+                responses: {
+                    200: {
+                        description: `${moduleName} retrieved successfully`,
+                    },
+                    404: {
+                        description: `${moduleName} not found`,
+                    },
+                },
+            },
+            put: {
+                summary: `Update a ${moduleName} by ID`,
+                tags: [moduleName],
+                parameters: [
+                    {
+                        in: "path",
+                        name: "id",
+                        required: true,
+                        schema: { type: "string" },
+                        description: `The ID of the ${moduleName} to update`,
+                    },
+                ],
+                requestBody: {
+                    required: true,
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    name: { type: "string" },
+                                    description: { type: "string" },
+                                }
+                            }
+                        }
+                    }
+                },
+                responses: {
+                    200: {
+                        description: `${moduleName} updated successfully`,
+                    },
+                    404: {
+                        description: `${moduleName} not found`,
+                    },
+                }
+            },
+            delete: {
+                summary: `Delete a ${moduleName} by ID`,
+                tags: [moduleName],
+                parameters: [
+                    {
+                        in: "path",
+                        name: "id",
+                        required: true,
+                        schema: { type: "string" },
+                        description: `The ID of the ${moduleName} to delete`,
+                    },
+                ],
+                responses: {
+                    200: {
+                        description: `${moduleName} deleted successfully`,
+                    },
+                    404: {
+                        description: `${moduleName} not found`,
+                    },
+                }
+            }
+        };
+    }
+
     const docs = swaggerJsdoc({
         definition: {
             openapi: "3.1.0",
@@ -188,7 +475,7 @@ export async function getSwaggerDocument(projectName: string) {
                 description: `Swagger documentation for ${projectName}`,
             },
             basePath: `/${projectName}`,
-            paths: swaggerPaths,
+            paths,
         },
         apis: ["./src/**/*.ts"], // Adjust to match your API file paths
     });
