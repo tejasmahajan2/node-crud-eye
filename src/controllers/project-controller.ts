@@ -9,7 +9,8 @@ const ajv = new Ajv();
 addFormats(ajv);
 
 function getResourceComponents(req: Request) {
-    const { 0: resourceName, projectName, id } = req.params;
+    let { 0: resourceName, projectName, id } = req.params;
+    projectName = projectName.toLowerCase();
     return { resourceName, projectName, id };
 }
 
@@ -25,11 +26,14 @@ function getOrCreateModel(collectionName: string) {
 }
 
 export async function validateProject(req: Request, res: Response, next: NextFunction) {
-    const { resourceName, projectName, id } = getResourceComponents(req);
+    const { resourceName, projectName } = getResourceComponents(req);
+    console.log(projectName)
 
     const projectFound = await collections.projects.findOne({
         name: projectName
     });
+
+    console.log(projectFound);
 
     if (!projectFound) {
         res.status(404).send(`Cannot ${req.method} /${projectName}/${resourceName}`);
@@ -41,7 +45,7 @@ export async function validateProject(req: Request, res: Response, next: NextFun
 
 
 export async function validateModule(req: Request, res: Response, next: NextFunction) {
-    const { resourceName, projectName, id } = getResourceComponents(req);
+    const { resourceName, projectName } = getResourceComponents(req);
     const { projectEntity } = req.body;
 
     const moduleFound = await collections.modules.findOne({
@@ -58,7 +62,7 @@ export async function validateModule(req: Request, res: Response, next: NextFunc
 }
 
 export async function validateResource(req: Request, res: Response, next: NextFunction) {
-    const { resourceName, projectName, id } = getResourceComponents(req);
+    const { resourceName, projectName } = getResourceComponents(req);
     const { moduleEntity } = req.body;
 
     const resourceFound = await collections.resources.findOne({

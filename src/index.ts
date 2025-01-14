@@ -12,10 +12,6 @@ const app: Express = express();
 
 app.use(cors());
 app.use(express.json());
-app.param('projectName', (req, res, next, projectName) => {
-    req.params.projectName = projectName.toLowerCase();
-    next();
-});
 app.use('/', swaggerRouter);
 app.use('/', projectRouter);
 
