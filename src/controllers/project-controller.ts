@@ -116,7 +116,7 @@ export async function validatePayload(req: Request, res: Response, next: NextFun
 export async function performPreBusinessLogic(req: Request, res: Response, next: NextFunction) {
     const { resourceEntity } = req.body;
 
-    const logicEntity = await collections.businessLogics.findOne({ trigger: "pre", resourceId: `${resourceEntity._id}` });
+    const logicEntity = await collections.businessLogics.findOne({ trigger: "pre", resourceId: resourceEntity._id });
 
     if (logicEntity) {
         try {
@@ -135,191 +135,64 @@ export async function performPreBusinessLogic(req: Request, res: Response, next:
 
 }
 
-export async function performPostBusinessLogic(req: Request, res: Response, next: NextFunction) {
-    const { resourceEntity } = req.body;
-
-    const logicEntity = await collections.businessLogics.findOne({ trigger: "post", resourceId: `${resourceEntity._id}` });
-
-    if (logicEntity) {
-        try {
-            const logicFunction = eval(logicEntity.logic);  // Convert string to function
-            if (typeof logicFunction === 'function') {
-                await logicFunction(req, res);  // Execute the function
-            }
-        } catch (error) {
-            console.error('Error in post-business logic:', error);
-        }
-    } else {
-        next();  // Continue to the next middleware
-    }
-
-}
-
-
 export async function processRequest(req: Request, res: Response, next: NextFunction) {
     const { resourceName, projectName, id } = getResourceComponents(req);
     const { projectEntity, moduleEntity, resourceEntity, ...body } = req.body;
 
     const modelName = `${projectName}_${resourceName}`.toLowerCase();
     const model = getOrCreateModel(modelName);
-    if (req.method === "POST") {
-        const created = await model.create(body);
-        res.send(created);
-    } else if (req.method === "GET" && id) {
-        const retrieved = await model.findOne({ _id: id });
-        if (retrieved) {
-            res.send(retrieved);
-        } else {
-            res.send("Entity not found.");
-        }
-    } else if (req.method === "GET" && !id) {
-        const retrievedAll = await model.find({});
-        if (retrievedAll?.length > 0) {
-            res.send(retrievedAll);
-        } else {
-            res.send("No entities found.");
-        }
-    } else if (req.method === "PUT") {
-        let found = await model.findOne({ _id: id });
-        if (found) {
-            const updated = await model.updateOne({ _id: id }, body);
-            res.send({ message: updated.modifiedCount === 0 ? "Entity not modified" : "Entity modified" });
-        } else {
-            res.send("Entity not found.");
-        }
-    } else if (req.method === "DELETE") {
-        const deleted = await model.findByIdAndDelete({ _id: id });
-        if (deleted) {
-            res.send("Entity deleted.");
-        } else {
-            res.send("Entity not found.");
-        }
-    } else {
-        res.status(404).send(`Cannot ${req.method} ${req.originalUrl}`);
-    }
 
+    try {
+        let responseData;
+
+        // Handle different HTTP methods dynamically
+        responseData = await handleRequestByMethod(req, model, id, body);
+
+        // Store response data in res.locals for further manipulation
+        res.locals.responseData = responseData;
+
+        next();  // Pass control to next middleware
+
+    } catch (error) {
+        console.error("Error in processRequest:", error);
+        res.status(500).send("Internal Server Error");
+    }
 }
 
-// async function validateRequest(req: Request, res: Response, next: NextFunction) {
-//     const { projectName } = req.params;
-//     const projectFound = await collections.projects.findOne({
-//         name: projectName,
-//         isDeleted: false
-//     });
+// Function to handle different HTTP methods
+async function handleRequestByMethod(req: Request, model: any, id: string, body: any) {
+    switch (req.method) {
+        case "POST":
+            return await model.create(body);
+        case "GET":
+            return id ? await model.findOne({ _id: id }) || "Entity not found." : await model.find({}) || "No entities found.";
+        case "PUT":
+            const found = await model.findOne({ _id: id });
+            return found ? { message: (await model.updateOne({ _id: id }, body)).modifiedCount === 0 ? "Entity not modified" : "Entity modified" } : { message: "Entity not found." };
+        case "DELETE":
+            const deleted = await model.findByIdAndDelete({ _id: id });
+            return { message: deleted ? "Entity deleted." : "Entity not found." };
+        default:
+            return `Cannot ${req.method} ${req.originalUrl}`;
+    }
+}
 
-//     if (!projectFound) {
-//         res.status(404).send(`Cannot ${req.method} /${projectName}`);
-//     } else {
-//         const typeFound = await typesCollection.findOne({
-//             projectId: projectFound?.uuid,
-//             organizationId: projectFound?.organizationId,
-//             isDeleted: false
-//         });
+export async function performPostBusinessLogic(req: Request, res: Response, next: NextFunction) {
+    const { resourceEntity } = req.body;
 
-//         if (!typeFound) {
-//             res.status(404).send(`Cannot ${req.method} /${projectName}`);
-//         } else {
-//             // If methods is not POST or PUT we dont need to validate schema
-//             const resource = req.originalUrl.split(`/${projectName}/`)[1];
-//             console.log(resource);
+    const logicEntity = await collections.businessLogics.findOne({ trigger: "post", resourceId: resourceEntity?._id });
 
-//             const schemaEntity = await schemaEntitiesCollection.findOne({
-//                 method: req.method.toLocaleLowerCase(),
-//                 resource,
-//                 uuid: typeFound?.schemaId,
-//                 isDeleted: false,
-//             });
+    if (logicEntity) {
+        try {
+            const logicFunction = eval(logicEntity.logic);
+            if (typeof logicFunction === "function") {
+                await logicFunction(req, res);  // Execute the logic function
+            }
+        } catch (error) {
+            console.error("Error in post-business logic:", error);
+        }
+    }
 
-//             if (!schemaEntity) {
-//                 res.status(404).send(`Cannot ${req.method} ${req.originalUrl}`);
-//             } else {
-//                 // Check if the collection exists
-//                 const collectionName = `${projectName}_${resource}`.toLocaleLowerCase();
-
-//                 // Create a generic schema and models
-//                 let DynamicModel = mongoose.models[collectionName];
-//                 if (!DynamicModel) {
-//                     const dynamicSchema = new mongoose.Schema(BaseSchemaFields, { strict: false });
-//                     DynamicModel = mongoose.model(collectionName, dynamicSchema, collectionName);
-//                 }
-
-//                 const validationMethods = ["POST", "PUT", "PATCH"];
-
-//                 if (validationMethods.includes(req.method)) {
-//                     const validate = ajv.compile(schemaEntity.schema);
-//                     if (!validate(req.body)) {
-//                         // const errors = validate.errors?.map((e) => `${e?.message} "${e?.params?.additionalProperty}"`);
-//                         res.status(400).json({ errors: validate.errors });
-//                     } else {
-//                         switch (req?.method) {
-//                             case "POST":
-//                                 res.send(await DynamicModel.create(req.body));
-//                                 break;
-//                             default:
-//                                 break;
-//                         }
-//                     }
-//                 } else {
-//                     switch (req?.method) {
-//                         case "GET":
-//                             res.send(await DynamicModel.find());
-//                             break;
-//                         case "POST":
-//                         default:
-//                             break;
-//                     }
-//                 }
-
-//             }
-
-
-//             // if (!schemaEntity) {
-//             //     res.status(404).send(`Cannot ${req.method} ${req.originalUrl}`);
-//             // } else {
-//             //     const validate = ajv.compile(schemaEntity.schema);
-//             //     if (!validate(req.body)) {
-//             //         const errors = validate.errors?.map((e) => `${e?.message} "${e?.params?.additionalProperty}"`);
-//             //         res.status(400).json({ errors });
-//             //     } else {
-
-//             //         // Check if the collection exists
-//             //         const collectionName = `${projectName}_${resource}`.toLocaleLowerCase();
-
-//             //         let DynamicModel = mongoose.models[collectionName];
-//             //         if (!DynamicModel) {
-//             //             // Create a generic schema
-//             //             const dynamicSchema = new mongoose.Schema(BaseSchemaFields, { strict: false });
-//             //             DynamicModel = mongoose.model(collectionName, dynamicSchema, collectionName);
-//             //         }
-
-//             //         switch (req?.method) {
-//             //             case "GET":
-//             //                 res.send(await DynamicModel.find());
-//             //                 break;
-//             //             case "POST":
-//             //                 res.send(await DynamicModel.create(req.body));
-//             //                 break;
-//             //             default:
-//             //                 break;
-//             //         }
-
-//             //         // const logicEntity = await bussinessLogicsCollection.findOne({ schemaId: schemaEntity?.uuid, isDeleted: false, });
-
-//             //         // if (!logicEntity) {
-//             //         //     res.status(404).send(`Cannot ${req.method} ${req.originalUrl}`);
-//             //         // } else {
-//             //         //     try {
-//             //         //         next();
-//             //         //         const evalutedFunc = eval(logicEntity.logic)(req, res, next);
-//             //         //         if (!evalutedFunc) next();
-//             //         //         else app.use('/' + projectName, evalutedFunc);
-//             //         //     } catch (error) {
-//             //         //         console.log(error);
-//             //         //         res.status(500).send(`Unexpect error occured!`);
-//             //         //     }
-//             //         // }
-//             //     }
-//             // }
-//         }
-//     }
-// }
+    // Pass control to the next middleware, which will send the response
+    next();
+}
