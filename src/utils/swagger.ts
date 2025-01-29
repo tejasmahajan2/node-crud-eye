@@ -9,7 +9,7 @@ export async function getSwaggerDocument(projectName: string) {
     if (!projectFound) throw new AppError('NOT_FOUND', 'Project not found', 404);
 
     const modulesFound = await collections.modules.find({
-        projectId: `${projectFound?._id}`
+        projectId: projectFound?._id
     }).toArray();
 
     if (modulesFound.length === 0) throw new AppError('NOT_FOUND', 'Project not found', 404);
@@ -17,7 +17,7 @@ export async function getSwaggerDocument(projectName: string) {
     const paths: any = {};
 
     for (const module of modulesFound) {
-        const allResources = await collections.resources.find({ moduleId: `${module._id}` }).toArray();
+        const allResources = await collections.resources.find({ moduleId: module._id }).toArray();
 
         if (allResources.length === 0) continue;
 
@@ -63,6 +63,7 @@ export async function getSwaggerDocument(projectName: string) {
         // Conditionally add POST method
         if (methodsToConfigure.includes("POST")) {
             const resourceFound = allResources.find((resource) => resource.method === "POST");
+            console.log(resourceFound?.schema?.properties)
 
             paths[`/${basePath}`]["post"] = {
                 summary: `Create a new ${moduleName}`,

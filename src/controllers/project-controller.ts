@@ -27,13 +27,9 @@ function getOrCreateModel(collectionName: string) {
 
 export async function validateProject(req: Request, res: Response, next: NextFunction) {
     const { resourceName, projectName } = getResourceComponents(req);
-    console.log(projectName)
-
     const projectFound = await collections.projects.findOne({
         name: projectName
     });
-
-    console.log(projectFound);
 
     if (!projectFound) {
         res.status(404).send(`Cannot ${req.method} /${projectName}/${resourceName}`);
@@ -50,8 +46,10 @@ export async function validateModule(req: Request, res: Response, next: NextFunc
 
     const moduleFound = await collections.modules.findOne({
         name: resourceName,
-        projectId: `${projectEntity._id}`
+        projectId: projectEntity._id
     });
+
+
 
     if (!moduleFound) {
         res.status(404).send(`Cannot ${req.method} /${projectName}/${resourceName}`);
@@ -64,10 +62,9 @@ export async function validateModule(req: Request, res: Response, next: NextFunc
 export async function validateResource(req: Request, res: Response, next: NextFunction) {
     const { resourceName, projectName } = getResourceComponents(req);
     const { moduleEntity } = req.body;
-
     const resourceFound = await collections.resources.findOne({
         method: req.method,
-        moduleId: `${moduleEntity._id}`
+        moduleId: moduleEntity._id
     });
 
     if (!resourceFound) {
@@ -80,6 +77,7 @@ export async function validateResource(req: Request, res: Response, next: NextFu
 
 export async function validateMethods(req: Request, res: Response, next: NextFunction) {
     const { id } = getResourceComponents(req);
+
     if (
         (id && req.method === "POST") ||
         (!id && req.method === "PUT")
@@ -115,6 +113,49 @@ export async function validatePayload(req: Request, res: Response, next: NextFun
     }
 }
 
+export async function performPreBusinessLogic(req: Request, res: Response, next: NextFunction) {
+    const { resourceEntity } = req.body;
+
+    const logicEntity = await collections.businessLogics.findOne({ trigger: "pre", resourceId: `${resourceEntity._id}` });
+
+    if (logicEntity) {
+        try {
+            const logicFunction = eval(logicEntity.logic);  // Convert string to function
+
+            if (typeof logicFunction === 'function') {
+                await logicFunction(req, res, next);  // Execute the function
+
+            }
+        } catch (error) {
+            console.error('Error in pre-business logic:', error);
+        }
+    } else {
+        next();  // Ensure the middleware chain continues
+    }
+
+}
+
+export async function performPostBusinessLogic(req: Request, res: Response, next: NextFunction) {
+    const { resourceEntity } = req.body;
+
+    const logicEntity = await collections.businessLogics.findOne({ trigger: "post", resourceId: `${resourceEntity._id}` });
+
+    if (logicEntity) {
+        try {
+            const logicFunction = eval(logicEntity.logic);  // Convert string to function
+            if (typeof logicFunction === 'function') {
+                await logicFunction(req, res);  // Execute the function
+            }
+        } catch (error) {
+            console.error('Error in post-business logic:', error);
+        }
+    } else {
+        next();  // Continue to the next middleware
+    }
+
+}
+
+
 export async function processRequest(req: Request, res: Response, next: NextFunction) {
     const { resourceName, projectName, id } = getResourceComponents(req);
     const { projectEntity, moduleEntity, resourceEntity, ...body } = req.body;
@@ -142,7 +183,7 @@ export async function processRequest(req: Request, res: Response, next: NextFunc
         let found = await model.findOne({ _id: id });
         if (found) {
             const updated = await model.updateOne({ _id: id }, body);
-            res.send({message : updated.modifiedCount === 0 ? "Entity not modified" : "Entity modified"});
+            res.send({ message: updated.modifiedCount === 0 ? "Entity not modified" : "Entity modified" });
         } else {
             res.send("Entity not found.");
         }

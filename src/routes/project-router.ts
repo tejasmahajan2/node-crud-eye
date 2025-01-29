@@ -10,7 +10,9 @@ const allMiddlewares = [
     projectController.validateResource,
     projectController.validateMethods,
     projectController.validatePayload,
+    projectController.performPreBusinessLogic,
     projectController.processRequest,
+    projectController.performPostBusinessLogic,
 ]
 
 const paramsAllMiddlewares = [
@@ -20,7 +22,9 @@ const paramsAllMiddlewares = [
     projectController.validateMethods,
     projectController.validateParams,
     projectController.validatePayload,
+    projectController.performPreBusinessLogic,
     projectController.processRequest,
+    projectController.performPostBusinessLogic,
 ]
 
 

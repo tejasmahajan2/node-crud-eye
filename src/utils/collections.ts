@@ -6,4 +6,5 @@ export const collections = {
     projects: mongoose.connection.collection("projects"),
     modules: mongoose.connection.collection("modules"),
     resources: mongoose.connection.collection("resources"),
+    businessLogics: mongoose.connection.collection("business_logics"),
 }
