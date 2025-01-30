@@ -13,6 +13,7 @@ const allMiddlewares = [
     projectController.performPreBusinessLogic,
     projectController.processRequest,
     projectController.performPostBusinessLogic,
+    projectController.sendResponse,
 ]
 
 const paramsAllMiddlewares = [
@@ -25,6 +26,7 @@ const paramsAllMiddlewares = [
     projectController.performPreBusinessLogic,
     projectController.processRequest,
     projectController.performPostBusinessLogic,
+    projectController.sendResponse,
 ]
 
 

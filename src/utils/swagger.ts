@@ -84,7 +84,7 @@ export async function getSwaggerDocument(projectName: string) {
                         content: {
                             "application/json": {
                                 schema: {
-                                    type: "objrct",
+                                    type: "object",
                                     properties: { ...resourceFound?.schema?.properties, ...BaseSchemaFields }
                                 }
                             }
@@ -122,7 +122,7 @@ export async function getSwaggerDocument(projectName: string) {
                         content: {
                             "application/json": {
                                 schema: {
-                                    type: "objrct",
+                                    type: "object",
                                     properties: { ...resourceFound?.schema?.properties, ...BaseSchemaFields }
                                 }
                             }
@@ -166,7 +166,7 @@ export async function getSwaggerDocument(projectName: string) {
                         content: {
                             "application/json": {
                                 schema: {
-                                    type: "objrct",
+                                    type: "object",
                                     properties: { ...resourceFound?.schema?.properties, ...BaseSchemaFields }
                                 }
                             }

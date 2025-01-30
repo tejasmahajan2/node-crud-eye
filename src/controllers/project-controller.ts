@@ -196,3 +196,7 @@ export async function performPostBusinessLogic(req: Request, res: Response, next
     // Pass control to the next middleware, which will send the response
     next();
 }
+
+export function sendResponse(req: Request, res: Response) {
+    res.send(res.locals.responseData);  // Send the modified response data to the client
+}
