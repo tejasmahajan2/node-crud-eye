@@ -49,8 +49,6 @@ export async function validateModule(req: Request, res: Response, next: NextFunc
         projectId: projectEntity._id
     });
 
-
-
     if (!moduleFound) {
         res.status(404).send(`Cannot ${req.method} /${projectName}/${resourceName}`);
     } else {
@@ -165,7 +163,7 @@ async function handleRequestByMethod(req: Request, model: any, id: string, body:
         case "POST":
             return await model.create(body);
         case "GET":
-            return id ? await model.findOne({ _id: id }) || "Entity not found." : await model.find({}) || "No entities found.";
+            return id ? await model.findOne({ _id: id }) || { message: "Entity not found." } : await model.find({}) || { message: "No entities found." };
         case "PUT":
             const found = await model.findOne({ _id: id });
             return found ? { message: (await model.updateOne({ _id: id }, body)).modifiedCount === 0 ? "Entity not modified" : "Entity modified" } : { message: "Entity not found." };
