@@ -1,0 +1,32 @@
+[{
+  "_id": {
+    "$oid": "6791ed5b21d8f164de5b8c51"
+  },
+  "uuid": "c84122ce-4fb1-4f24-9394-349b3dcd2281",
+  "isDeleted": false,
+  "created_user": "e3f01a07-1cfe-4481-9d1c-04a1149aac25",
+  "created_date": {
+    "$date": "2024-12-16T06:06:28.441Z"
+  },
+  "name": "invoice",
+  "organizationId": "e3f01a07-1cfe-4481-9d1c-04a1149aac25",
+  "projectId": {
+    "$oid": "6791ecb721d8f164de5b8c4a"
+  }
+},
+{
+  "_id": {
+    "$oid": "679b171129c0418a9fba2b78"
+  },
+  "uuid": "c84122ce-4fb1-4f24-9394-349b3dcd2281",
+  "isDeleted": false,
+  "created_user": "e3f01a07-1cfe-4481-9d1c-04a1149aac25",
+  "created_date": {
+    "$date": "2024-12-16T06:06:28.441Z"
+  },
+  "name": "products",
+  "organizationId": "e3f01a07-1cfe-4481-9d1c-04a1149aac25",
+  "projectId": {
+    "$oid": "6791ecb721d8f164de5b8c4a"
+  }
+}]

@@ -1,0 +1,30 @@
+[{
+  "_id": {
+    "$oid": "679b25aefd306996c5654817"
+  },
+  "isDeleted": false,
+  "deletedAt": null,
+  "name": "Pan Singh Tomar",
+  "createdAt": {
+    "$date": "2025-01-30T07:09:34.563Z"
+  },
+  "modifiedAt": {
+    "$date": "2025-01-30T07:09:34.564Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "679b25b9fd306996c565481e"
+  },
+  "isDeleted": false,
+  "deletedAt": null,
+  "name": "Pan Singh Tomar",
+  "createdAt": {
+    "$date": "2025-01-30T07:09:45.153Z"
+  },
+  "modifiedAt": {
+    "$date": "2025-01-30T07:09:45.153Z"
+  },
+  "__v": 0
+}]

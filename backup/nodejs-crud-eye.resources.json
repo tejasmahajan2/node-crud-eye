@@ -1,0 +1,78 @@
+[{
+  "_id": {
+    "$oid": "679b20fa29c0418a9fba2b98"
+  },
+  "isDeleted": false,
+  "created_user": "e3f01a07-1cfe-4481-9d1c-04a1149aac25",
+  "created_date": "2024-12-16T06:06:28.441Z",
+  "projectId": {
+    "$oid": "6791ecb721d8f164de5b8c4a"
+  },
+  "moduleId": {
+    "$oid": "679b171129c0418a9fba2b78"
+  },
+  "method": "POST",
+  "schema": {
+    "description": "Product name",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      }
+    },
+    "required": [],
+    "additionalProperties": false
+  }
+},
+{
+  "_id": {
+    "$oid": "679b250729c0418a9fba2b9c"
+  },
+  "isDeleted": false,
+  "created_user": "e3f01a07-1cfe-4481-9d1c-04a1149aac25",
+  "created_date": "2024-12-16T06:06:28.441Z",
+  "projectId": {
+    "$oid": "6791ecb721d8f164de5b8c4a"
+  },
+  "moduleId": {
+    "$oid": "679b171129c0418a9fba2b78"
+  },
+  "method": "GET",
+  "schema": {
+    "description": "Product name",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      }
+    },
+    "required": [],
+    "additionalProperties": false
+  }
+},
+{
+  "_id": {
+    "$oid": "679b25f929c0418a9fba2bac"
+  },
+  "isDeleted": false,
+  "created_user": "e3f01a07-1cfe-4481-9d1c-04a1149aac25",
+  "created_date": "2024-12-16T06:06:28.441Z",
+  "projectId": {
+    "$oid": "6791ecb721d8f164de5b8c4a"
+  },
+  "moduleId": {
+    "$oid": "6791ed5b21d8f164de5b8c51"
+  },
+  "method": "POST",
+  "schema": {
+    "description": "Product name",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      }
+    },
+    "required": [],
+    "additionalProperties": false
+  }
+}]

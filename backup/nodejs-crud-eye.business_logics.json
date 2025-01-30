@@ -1,0 +1,42 @@
+[{
+  "_id": {
+    "$oid": "679200ad21d8f164de5b8c76"
+  },
+  "isDeleted": false,
+  "created_user": "ba794247-fa70-43e7-a78a-da8ac6312e5f",
+  "created_date": {
+    "$date": "2024-12-31T12:55:49.850Z"
+  },
+  "logic": "(req, res, next) => {\n//    console.log(req.body);\nconsole.log(\"I am pre\");\nnext();\n\n}",
+  "projectId": "c71dd852-366f-4cb7-a48b-44589d546b8b",
+  "trigger": "pre",
+  "__v": 0,
+  "modified_date": {
+    "$date": "2024-12-31T12:58:48.714Z"
+  },
+  "modified_user": "ba794247-fa70-43e7-a78a-da8ac6312e5f",
+  "resourceId": {
+    "$oid": "6791f45621d8f164de5b8c69"
+  }
+},
+{
+  "_id": {
+    "$oid": "6799bd5711d99ba993ca44d3"
+  },
+  "isDeleted": false,
+  "created_user": "ba794247-fa70-43e7-a78a-da8ac6312e5f",
+  "created_date": {
+    "$date": "2024-12-31T12:55:49.850Z"
+  },
+  "logic": "(req, res) => {\nconsole.log(\"I am post\");\nconsole.log(JSON.stringify(res.locals));\ndelete res.locals.responseData._doc._id;\ndelete res.locals.responseData._doc.__v;\nres.send(res.locals.responseData);\n}",
+  "projectId": "c71dd852-366f-4cb7-a48b-44589d546b8b",
+  "trigger": "post",
+  "__v": 0,
+  "modified_date": {
+    "$date": "2024-12-31T12:58:48.714Z"
+  },
+  "modified_user": "ba794247-fa70-43e7-a78a-da8ac6312e5f",
+  "resourceId": {
+    "$oid": "6791f45621d8f164de5b8c69"
+  }
+}]

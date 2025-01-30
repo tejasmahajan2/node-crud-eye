@@ -1,0 +1,13 @@
+[{
+  "_id": {
+    "$oid": "6791ecb721d8f164de5b8c4a"
+  },
+  "isDeleted": false,
+  "created_user": "e3f01a07-1cfe-4481-9d1c-04a1149aac25",
+  "created_date": {
+    "$date": "2024-12-16T06:05:47.899Z"
+  },
+  "name": "telehealth",
+  "description": "Telehealth is a good project",
+  "organizationId": "e3f01a07-1cfe-4481-9d1c-04a1149aac25"
+}]
