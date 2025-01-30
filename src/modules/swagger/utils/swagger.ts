@@ -1,7 +1,7 @@
 import swaggerJsdoc from "swagger-jsdoc";
-import { AppError } from "./AppError";
-import { collections } from "./collections";
-import { BaseSchemaFields } from "../schemas/base-schema";
+import { AppError } from "../../../common/utils/AppError";
+import { collections } from "../../../common/utils/collections";
+import { BaseSchemaFields } from "../../../common/schemas/base-schema";
 
 export async function getSwaggerDocument(projectName: string) {
 

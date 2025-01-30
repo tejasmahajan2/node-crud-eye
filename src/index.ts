@@ -4,9 +4,8 @@ dotenv.config({});
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import connectDB from "./config/database";
-import swaggerRouter from "./routes/swagger-router";
-import projectRouter from "./routes/project-router";
-
+import projectRouter from "./modules/project/project-router";
+import swaggerRouter from "./modules/swagger/swagger-router";
 
 const app: Express = express();
 

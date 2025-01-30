@@ -2,8 +2,8 @@ import { NextFunction, Request, Response } from 'express';
 import mongoose from "mongoose";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
-import { BaseSchemaFields } from '../schemas/base-schema';
-import { collections } from '../utils/collections';
+import { BaseSchemaFields } from '../../common/schemas/base-schema';
+import { collections } from '../../common/utils/collections';
 
 const ajv = new Ajv();
 addFormats(ajv);
