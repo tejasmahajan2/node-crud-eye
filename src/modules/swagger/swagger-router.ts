@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from 'express'
 import swaggerUi from "swagger-ui-express";
-import { getSwaggerDocument } from '../modules/swagger/utils/swagger';
-import { AppError } from '../utils/AppError';
+import { AppError } from '../../common/utils/AppError';
+import { getSwaggerDocument } from './utils/swagger';
 const swaggerRouter = express.Router();
 
 // Serve Swagger UI assets
