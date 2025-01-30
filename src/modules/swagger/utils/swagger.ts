@@ -63,8 +63,7 @@ export async function getSwaggerDocument(projectName: string) {
         // Conditionally add POST method
         if (methodsToConfigure.includes("POST")) {
             const resourceFound = allResources.find((resource) => resource.method === "POST");
-            console.log(resourceFound?.schema?.properties)
-
+        
             paths[`/${basePath}`]["post"] = {
                 summary: `Create a new ${moduleName}`,
                 tags: [moduleName],
